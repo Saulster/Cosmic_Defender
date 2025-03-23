@@ -87,6 +87,7 @@ POWERUP_SIZE = 30
 powerup_move = False  # Add this line
 last_score = 0  # Add this line
 enemy_speed = 2 #added enemy speed
+bullets = [] #list of bullets
 
 # Score
 score_value = 0
@@ -139,8 +140,7 @@ def enemy(x, y, is_alive):  # Added is_alive parameter
 def fire_bullet(x, y):
     global bullet_state
     bullet_state = "fire"
-    screen.blit(bullet_img, (x + 20, y))
-
+    #screen.blit(bullet_img, (x + 20, y)) #removed
 
 def is_collision(enemy_x, enemy_y, bullet_x, bullet_y):
     distance = math.sqrt(
@@ -172,6 +172,7 @@ game_over = False  # Added game_over state variable
 clock = pygame.time.Clock()
 paused = False
 last_shot_time = 0  # To control rapid fire
+bullet_spawn_time = 0
 
 
 # --- Pause Screen Functions (moved to separate file) ---
@@ -289,6 +290,8 @@ while running:
                                 fire_bullet(bullet_x, bullet_y)
                                 # shoot_sound.play() #remove
                                 last_shot_time = current_time
+                                if rapid_fire:
+                                    bullet_spawn_time = pygame.time.get_ticks() #reset
 
                 elif event.key == pygame.K_ESCAPE:
                     paused = True  # Pause the game
@@ -346,6 +349,14 @@ while running:
             if bullet_state == "fire":
                 fire_bullet(bullet_x, bullet_y)
                 bullet_y += bullet_y_change
+                bullets.append([bullet_x+20, bullet_y])
+
+            #draw bullets
+            for bullet in bullets:
+                screen.blit(bullet_img, (bullet[0], bullet[1]))
+                bullet[1] += bullet_y_change
+                if bullet[1] < 0:
+                    bullets.pop(0)
 
             # Powerup
             if score_value - last_score >= 10:  # Check if score increased by 10
@@ -378,6 +389,19 @@ while running:
             if rapid_fire:
                 if pygame.time.get_ticks() - rapid_fire_start_time >= rapid_fire_duration:
                     rapid_fire = False
+                    bullet_spawn_time = 0
+
+
+            #fire bullets during rapid fire
+            if rapid_fire:
+                current_time = pygame.time.get_ticks()
+                if current_time - bullet_spawn_time >= 100:  # Adjust for desired rapid fire rate
+                    bullet_x = player_x
+                    fire_bullet(bullet_x, player_y)
+                    bullets.append([bullet_x+20, player_y])
+                    bullet_spawn_time = current_time
+
+
 
             player(player_x, player_y)
             show_score(text_x, text_y)
