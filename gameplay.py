@@ -31,6 +31,8 @@ try:
     player_img = pygame.image.load('spaceship.png').convert_alpha()
     enemy_img = pygame.image.load('enemy.png').convert_alpha()
     bullet_img = pygame.image.load('bullet.png').convert_alpha()
+    powerup_img = pygame.image.load('powerup.png').convert_alpha()  # Load powerup image
+    powerup_img = pygame.transform.scale(powerup_img, (30, 30))
     # explosion_anim = [pygame.image.load(f'explosion_{i}.png').convert_alpha() for i in range(9)] # Example of explosion frames
     # Load sound effects
     # pygame.mixer.music.load('background_music.wav')  # Replace with your music file #remove
@@ -80,10 +82,11 @@ rapid_fire_duration = 5000  # 5 seconds
 rapid_fire_start_time = 0
 powerup_x = random.randint(0, SCREEN_WIDTH - 30)
 powerup_y = random.randint(50, SCREEN_HEIGHT - 300)
-powerup_active = True
+powerup_active = False  # Start with powerup inactive
 POWERUP_SIZE = 30
 powerup_move = False  # Add this line
 last_score = 0  # Add this line
+enemy_speed = 2 #added enemy speed
 
 # Score
 score_value = 0
@@ -345,8 +348,15 @@ while running:
                 bullet_y += bullet_y_change
 
             # Powerup
+            if score_value - last_score >= 10:  # Check if score increased by 10
+                powerup_active = True
+                powerup_move = True
+                last_score = score_value  # Update last_score
+                powerup_x = random.randint(0, SCREEN_WIDTH - 30)
+                powerup_y = random.randint(50, SCREEN_HEIGHT - 300)
+
             if powerup_active:
-                pygame.draw.rect(screen, BLUE, (powerup_x, powerup_y, POWERUP_SIZE, POWERUP_SIZE))  # Draw powerup
+                screen.blit(powerup_img, (powerup_x, powerup_y))  # Draw powerup
 
                 if powerup_move:
                     # Move powerup towards player
@@ -354,15 +364,15 @@ while running:
                     direction_y = player_y - powerup_y
                     distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
                     if distance > 0:
-                        speed = 2  # Adjust for powerup speed
-                        powerup_x += (direction_x / distance) * speed
-                        powerup_y += (direction_y / distance) * speed
+                        powerup_x += (direction_x / distance) * enemy_speed
+                        powerup_y += (direction_y / distance) * enemy_speed
 
                 if is_powerup_collision(player_x, player_y, powerup_x, powerup_y):
                     rapid_fire = True
                     rapid_fire_start_time = pygame.time.get_ticks()
                     powerup_active = False # Remove powerup after collision
                     powerup_move = False
+
 
             # Check for rapid fire duration
             if rapid_fire:
